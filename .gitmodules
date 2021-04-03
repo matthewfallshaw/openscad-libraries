@@ -1,0 +1,9 @@
+[submodule "BOSL2"]
+	path = BOSL2
+	url = git@github.com:revarbat/BOSL2.git
+[submodule "NopSCADlibext"]
+	path = NopSCADlibext
+	url = git@github.com:matthewfallshaw/NopSCADlibext.git
+[submodule "NopSCADlib"]
+	path = NopSCADlib
+	url = git@github.com:nophead/NopSCADlib.git
