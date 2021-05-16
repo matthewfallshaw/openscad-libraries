@@ -11,100 +11,41 @@ function only_defined(v)=[for(i=v) if(!is_undef(i)) i];
 // function first_defined(v)=only_defined(v)[0];
 
 module polycyl(
-	l=undef, h=undef,
-	r=undef, r1=undef, r2=undef,
-	d=undef, d1=undef, d2=undef,
-	chamfer=undef, chamfer1=undef, chamfer2=undef,
-	chamfang=undef, chamfang1=undef, chamfang2=undef,
-	rounding=undef, rounding1=undef, rounding2=undef,
-	circum=true, realign=false, from_end=false,
-	center, anchor, spin=0, orient=UP
+		h, r, center,
+		l, r1, r2,
+		d, d1, d2,
+		chamfer, chamfer1, chamfer2,
+		chamfang, chamfang1, chamfang2,
+		rounding, rounding1, rounding2,
+		circum=false, realign=false, from_end=false,
+		anchor, spin=0, orient=UP
 ) {
-	r1 = get_radius(r1=r1, r=r, d1=d1, d=d, dflt=1);
-	r2 = get_radius(r1=r2, r=r, d1=d2, d=d, dflt=1);
 	l = first_defined([l, h, 1]);
-	sides = polysides(2*min(r1,r2));
+
+	rrr1 = get_radius(r1=r1, r=r, d1=d1, d=d, dflt=1);
+	rrr2 = get_radius(r1=r2, r=r, d1=d2, d=d, dflt=1);
 	sc = circum? 1/cos(180/sides) : 1;
-	phi = atan2(l, r2-r1);
+
+	rr1 = rrr1*sc;
+	rr2 = rrr2*sc;
+
+	echo(l=l, rrr1=rrr1, rrr2=rrr2, sides=sides, sc=sc, rr1=rr1, rr2=rr2);
+
+	sides = polysides(
+			r=2*min(rr1,rr2)
+		);
+
 	anchor = get_anchor(anchor,center,BOT,CENTER);
-	attachable(anchor,spin,orient, r1=r1, r2=r2, l=l) {
-		zrot(90+(realign?180/sides:0)) {
-			if (!any_defined([chamfer, chamfer1, chamfer2, rounding, rounding1, rounding2])) {
-				cylinder(h=l, r1=r1*sc, r2=r2*sc, center=true, $fn=sides);
-			} else {
-				vang = atan2(l, r1-r2)/2;
-				chang1 = 90-first_defined([chamfang1, chamfang, vang]);
-				chang2 = 90-first_defined([chamfang2, chamfang, 90-vang]);
-				cham1 = first_defined([chamfer1, chamfer]) * (from_end? 1 : tan(chang1));
-				cham2 = first_defined([chamfer2, chamfer]) * (from_end? 1 : tan(chang2));
-				fil1 = first_defined([rounding1, rounding]);
-				fil2 = first_defined([rounding2, rounding]);
-				if (chamfer != undef) {
-					assert(chamfer <= r1,  "chamfer is larger than the r1 radius of the cylinder.");
-					assert(chamfer <= r2,  "chamfer is larger than the r2 radius of the cylinder.");
-				}
-				if (cham1 != undef) {
-					assert(cham1 <= r1,  "chamfer1 is larger than the r1 radius of the cylinder.");
-				}
-				if (cham2 != undef) {
-					assert(cham2 <= r2,  "chamfer2 is larger than the r2 radius of the cylinder.");
-				}
-				if (rounding != undef) {
-					assert(rounding <= r1,  "rounding is larger than the r1 radius of the cylinder.");
-					assert(rounding <= r2,  "rounding is larger than the r2 radius of the cylinder.");
-				}
-				if (fil1 != undef) {
-					assert(fil1 <= r1,  "rounding1 is larger than the r1 radius of the cylinder.");
-				}
-				if (fil2 != undef) {
-					assert(fil2 <= r2,  "rounding2 is larger than the r1 radius of the cylinder.");
-				}
-				dy1 = abs(first_defined([cham1, fil1, 0]));
-				dy2 = abs(first_defined([cham2, fil2, 0]));
-				assert(dy1+dy2 <= l, "Sum of fillets and chamfer sizes must be less than the length of the cylinder.");
-
-				path = concat(
-					[[0,l/2]],
-
-					!is_undef(cham2)? (
-						let(
-							p1 = [r2-cham2/tan(chang2),l/2],
-							p2 = lerp([r2,l/2],[r1,-l/2],abs(cham2)/l)
-						) [p1,p2]
-					) : !is_undef(fil2)? (
-						let(
-							cn = find_circle_2tangents([r2-fil2,l/2], [r2,l/2], [r1,-l/2], r=abs(fil2)),
-							ang = fil2<0? phi : phi-180,
-							steps = ceil(abs(ang)/360*segs(abs(fil2))),
-							step = ang/steps,
-							pts = [for (i=[0:1:steps]) let(a=90+i*step) cn[0]+abs(fil2)*[cos(a),sin(a)]]
-						) pts
-					) : [[r2,l/2]],
-
-					!is_undef(cham1)? (
-						let(
-							p1 = lerp([r1,-l/2],[r2,l/2],abs(cham1)/l),
-							p2 = [r1-cham1/tan(chang1),-l/2]
-						) [p1,p2]
-					) : !is_undef(fil1)? (
-						let(
-							cn = find_circle_2tangents([r1-fil1,-l/2], [r1,-l/2], [r2,l/2], r=abs(fil1)),
-							ang = fil1<0? 180-phi : -phi,
-							steps = ceil(abs(ang)/360*segs(abs(fil1))),
-							step = ang/steps,
-							pts = [for (i=[0:1:steps]) let(a=(fil1<0?180:0)+(phi-90)+i*step) cn[0]+abs(fil1)*[cos(a),sin(a)]]
-						) pts
-					) : [[r1,-l/2]],
-
-					[[0,-l/2]]
-				);
-				rotate_extrude(convexity=2, $fn=sides) {
-					polygon(path);
-				}
-			}
-		}
-		children();
-	}
+	cyl(
+		center=center,
+		l=l, r1=rr1, r2=rr2,
+		chamfer=chamfer, chamfer1=chamfer1, chamfer2=chamfer2,
+		chamfang=chamfang, chamfang1=chamfang1, chamfang2=chamfang2,
+		rounding=rounding, rounding1=rounding1, rounding2=rounding2,
+		circum=circum, realign=realign, from_end=from_end,
+		anchor=anchor, spin=spin, orient=orient,
+		$fn=sides
+	) children();
 }
 
 module polytube(
@@ -148,3 +89,4 @@ module polytube(
 		children();
 	}
 }
+
