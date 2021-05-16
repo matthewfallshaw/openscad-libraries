@@ -73,7 +73,6 @@ echo("-- Functions:"
     );
 
 
-// function struct_dump(struct,indent=1)=str(LF,"  ",str_join(c_command,str(LF,"  ")));
 function struct_dump(struct,struct_name,indent=0)=
   str(LF,_ind(indent),struct_name
      ,str_join([ for(i=struct)
@@ -85,7 +84,6 @@ function struct_dump(struct,struct_name,indent=0)=
                ]
               )
      );
-  // str(LF,_ind(indent),str_join(struct,str(LF,_ind(indent))));
 
 LF=chr(10);
 function _ind(n)=str_join(repeat("  ",n),"");
