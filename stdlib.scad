@@ -18,7 +18,9 @@ c_lwtsi = 0.4;   // top solid infill
 c_lws   = 0.35;  // supports
 // layer height
 c_lh    = 0.2;   // layer height
+// other constants
 BIGNUM  = 1000;  // a big number
+c_eps   = 0.01; // a small number
 
 echo("-- Constants:"
     ,$slop=$slop
