@@ -1,3 +1,5 @@
+// Very heavily inspired by https://github.com/nophead/NopSCADlib/blob/master/utils/core/polyholes.scad
+
 include <BOSL2/std.scad>
 
 function polysides(d,r)    = let(dd=is_undef(d)?2*r:d) max(round(2*dd),3);
@@ -18,7 +20,8 @@ module polycyl(
 		chamfang, chamfang1, chamfang2,
 		rounding, rounding1, rounding2,
 		circum=false, realign=false, from_end=false,
-		anchor, spin=0, orient=UP
+		anchor, spin=0, orient=UP,
+		sides
 ) {
 	l = first_defined([l, h, 1]);
 
@@ -29,9 +32,7 @@ module polycyl(
 	rr1 = rrr1*sc;
 	rr2 = rrr2*sc;
 
-	echo(l=l, rrr1=rrr1, rrr2=rrr2, sides=sides, sc=sc, rr1=rr1, rr2=rr2);
-
-	sides = polysides(
+	sides = sides ? sides : polysides(
 			r=2*min(rr1,rr2)
 		);
 
@@ -79,10 +80,10 @@ module polytube(
   }
 	sides = segs(max(r1,r2));
 	anchor = get_anchor(anchor, center, BOT, BOT);
-	attachable(anchor,spin,orient, r1=r1, r2=r2, l=h) {
+	attachable(anchor=anchor, spin=spin, orient=orient, l=h, r1=r1, r2=r2) {
 		zrot(realign? 180/sides : 0) {
 			difference() {
-				cyl(h=h, r1=r1, r2=r2, $fn=sides) children();
+				cyl(h=h, r1=r1, r2=r2, $fn=sides);
 				polycyl(h=h+0.01, r1=ir1, r2=ir2, circum=true);
 			}
 		}
